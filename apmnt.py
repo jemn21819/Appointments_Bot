@@ -15,36 +15,42 @@ try:
         EC.presence_of_element_located((By.ID, "rb-home-list-new"))
     )
     new_appmnt.click()
+    time.sleep(5)
 
     nextButtonHome = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "btnHomeNext"))
     )
     nextButtonHome.click()
+    time.sleep(15)
 
     yesInter = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "InternationalTravel-yes"))
     )
     yesInter.click()
+    time.sleep(4)
 
     dateTravel = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "DateTravel"))
     )
     dateTravel.send_keys("03/25/2021")
+    time.sleep(8)
 
     noVisa = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID,"VisaNeeded-no"))
     )
     noVisa.click()
+    time.sleep(4)
 
     household = WebDriverWait(driver,10).until(
         EC.presence_of_element_located((By.XPATH, "//button[@data-val='2']" ))
     )
     household.click()
+    time.sleep(5)
 
 
     notRobot = WebDriverWait(driver,10).until(
-        EC.presence_of_element_located((By.XPATH, "//span[@id='recaptcha-anchor']"))
-    )
+        EC.presence_of_element_located((By.XPATH, "//div[@class='recaptcha-checkbox-border']"))
+   )
     notRobot.click()
 
     submitButton = WebDriverWait(driver, 10).until(
@@ -52,5 +58,11 @@ try:
     )
     submitButton.click()
 
+#    warBotton = WebDriverWait(driver,10).until(
+#       EC.presence_of_element_located((By.XPATH, "//button[@class='btn-standard btn-default']"))
+#    )
+#    warBotton.click()
+
+
 except:
-    driver.quit()
+    print("hello")

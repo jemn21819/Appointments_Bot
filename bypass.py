@@ -1,106 +1,88 @@
+#system libraries
+import os
+import random
+import time
 
+#selenium libraries
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import NoSuchElementException   
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.webdriver.chrome.options import Options
 
-import os, sys
-import time,requests
-from bs4 import BeautifulSoup
+#recaptcha libraries
+import speech_recognition as sr
+import ffmpy
+import requests
+import urllib
+import pydub
 
-delayTime = 2
-audioToTextDelay = 10
-filename = 'test.mp3'
-byPassUrl = 'https://www.google.com/recaptcha/api2/demo'
-googleIBMLink = 'https://speech-to-text-demo.ng.bluemix.net/'
+def delay ():
+    time.sleep(random.randint(2,3))
 
-option = webdriver.ChromeOptions()
-option.add_argument('--disable-notifications')
-option.add_argument("--mute-audio")
-# option.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-option.add_argument("user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/56.0.2924.75 Mobile/14E5239e Safari/602.1")
-
-def audioToText(mp3Path):
+try:
+    #create chrome driver
+    PATH =  "C:\Program Files (x86)\chromedriver.exe"
+    driver = webdriver.Chrome(PATH) 
+    delay()
+    #go to website
+    driver.get("https://www.google.com/recaptcha/api2/demo")
     
-    driver.execute_script('''window.open("","_blank");''')
-    driver.switch_to.window(driver.window_handles[1])
+except:
+    print("[-] Please update the chromedriver.exe in the webdriver folder according to your chrome version:https://chromedriver.chromium.org/downloads")
 
-    driver.get(googleIBMLink)
+#switch to recaptcha frame
+frames=driver.find_elements_by_tag_name("iframe")
+driver.switch_to.frame(frames[0]);
+delay()
 
-    # Upload file 
-    time.sleep(1)
-    root = driver.find_element_by_id('root').find_elements_by_class_name('dropzone _container _container_large')
-    btn = driver.find_element(By.XPATH, '//*[@id="root"]/div/input')
-    btn.send_keys(mp3Path)
+#click on checkbox to activate recaptcha
+driver.find_element_by_class_name("recaptcha-checkbox-border").click()
 
-    # Audio to text is processing
-    time.sleep(audioToTextDelay)
+#switch to recaptcha audio control frame
+driver.switch_to.default_content()
+frames=driver.find_element_by_xpath("/html/body/div[2]/div[4]").find_elements_by_tag_name("iframe")
+driver.switch_to.frame(frames[0])
+delay()
 
-    text = driver.find_element(By.XPATH, '//*[@id="root"]/div/div[6]/div/div/div').find_elements_by_tag_name('span')
-    result = " ".join( [ each.text for each in text ] )
+#click on audio challenge
+driver.find_element_by_id("recaptcha-audio-button").click()
 
-    driver.close()
-    driver.switch_to.window(driver.window_handles[0])
+#switch to recaptcha audio challenge frame
+driver.switch_to.default_content()
+frames= driver.find_elements_by_tag_name("iframe")
+driver.switch_to.frame(frames[-1])
+delay()
 
-    return result
+#click on the play button
+driver.find_element_by_xpath("/html/body/div/div/div[3]/div/button").click()
+#get the mp3 audio file
+src = driver.find_element_by_id("audio-source").get_attribute("src")
+print("[INFO] Audio src: %s"%src)
+#download the mp3 audio file from the source
+urllib.request.urlretrieve(src, os.getcwd()+"\\sample.mp3")
+sound = pydub.AudioSegment.from_mp3(os.getcwd()+"\\sample.mp3")
+sound.export(os.getcwd()+"\\sample.wav", format="wav")
+sample_audio = sr.AudioFile(os.getcwd()+"\\sample.wav")
+r= sr.Recognizer()
 
-def saveFile(content,filename):
-    with open(filename, "wb") as handle:
-        for data in content.iter_content():
-            handle.write(data)
+with sample_audio as source:
+    audio = r.record(source)
 
+#translate audio to text with google voice recognition
+key=r.recognize_google(audio)
+print("[INFO] Recaptcha Passcode: %s"%key)
 
-driver = webdriver.Chrome(ChromeDriverManager().install(), options=option)
-driver.get(byPassUrl)
-
-googleClass = driver.find_elements_by_class_name('g-recaptcha')[0]
-outeriframe = googleClass.find_element_by_tag_name('iframe')
-outeriframe.click()
-
-allIframesLen = driver.find_elements_by_tag_name('iframe')
-audioBtnFound = False
-audioBtnIndex = -1
-
-for index in range(len(allIframesLen)):
-    driver.switch_to.default_content()
-    iframe = driver.find_elements_by_tag_name('iframe')[index]
-    driver.switch_to.frame(iframe)
-    driver.implicitly_wait(delayTime)
-    try:
-        audioBtn = driver.find_element_by_id('recaptcha-audio-button') or driver.find_element_by_id('recaptcha-anchor')
-        audioBtn.click()
-        audioBtnFound = True
-        audioBtnIndex = index
-        break
-    except Exception as e:
-        pass
-
-if audioBtnFound:
-    try:
-        while True:
-            href = driver.find_element_by_id('audio-source').get_attribute('src')
-            response = requests.get(href, stream=True)
-            saveFile(response,filename)
-            response = audioToText(os.getcwd() + '/' + filename)
-            print(response)
-
-            driver.switch_to.default_content()
-            iframe = driver.find_elements_by_tag_name('iframe')[audioBtnIndex]
-            driver.switch_to.frame(iframe)
-
-            inputbtn = driver.find_element_by_id('audio-response')
-            inputbtn.send_keys(response)
-            inputbtn.send_keys(Keys.ENTER)
-
-            time.sleep(2)
-            errorMsg = driver.find_elements_by_class_name('rc-audiochallenge-error-message')[0]
-
-            if errorMsg.text == "" or errorMsg.value_of_css_property('display') == 'none':
-                print("Success")
-                break
-             
-    except Exception as e:
-        print(e)
-        print('Caught. Need to change proxy now')
-else:
-    print('Button not found. This should not happen.')
+#key in results and submit
+driver.find_element_by_id("audio-response").send_keys(key.lower())
+driver.find_element_by_id("audio-response").send_keys(Keys.ENTER)
+driver.switch_to.default_content()
+delay()
+driver.find_element_by_id("recaptcha-demo-submit").click()
+delay()
