@@ -34,41 +34,46 @@ try:
     delay()
     #go to website
     driver.get("https://passportappointment.travel.state.gov/")
-    
+
 except:
     print("[-] Please update the chromedriver.exe in the webdriver folder according to your chrome version:https://chromedriver.chromium.org/downloads")
 
+# selection of elements for navigation in the web page and choose options
 try:
+    # Select a new appointment
     new_appmnt = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "rb-home-list-new"))
     )
     new_appmnt.click()
     delay()
-
+    #click next button to next page
     nextButtonHome = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "btnHomeNext"))
     )
     nextButtonHome.click()
     delay()
-
+    
+    #select yes for international travel
     yesInter = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "InternationalTravel-yes"))
     )
     yesInter.click()
     
-
+    #Make the selection of date of travel
     dateTravel = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "DateTravel"))
     )
     dateTravel.send_keys("03/25/2021")
     delay()
 
+    #select option of no visa
     noVisa = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID,"VisaNeeded-no"))
     )
     noVisa.click()
     delay()
 
+    #select the amount of household for appointment
     household = WebDriverWait(driver,10).until(
         EC.presence_of_element_located((By.XPATH, "//button[@data-val='2']" ))
     )
@@ -78,6 +83,9 @@ try:
 except:
     print("some error")
 
+''' This part is for bypass the recaptch using the audio option
+translate the audio to text, getting the text and paste it in
+in te recaptcha to get green checker'''
 
 #switch to recaptcha frame
 frames=driver.find_elements_by_tag_name("iframe")
