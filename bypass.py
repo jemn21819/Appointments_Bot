@@ -83,9 +83,9 @@ try:
 except:
     print("some error")
 
-''' This part is for bypass the recaptch using the audio option
-translate the audio to text, getting the text and paste it in
-in te recaptcha to get green checker'''
+#This part is for bypass the recaptch using the audio option
+#translate the audio to text, getting the text and paste it in
+#in te recaptcha to get green checker
 
 #switch to recaptcha frame
 frames=driver.find_elements_by_tag_name("iframe")
