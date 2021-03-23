@@ -1,0 +1,1 @@
+start "" "C:\Program Files\nodejs\node.exe" "C:\Users\James\Desktop\usingpuppeteer\index.js"
