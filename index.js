@@ -1,7 +1,7 @@
-onst puppeteer= require('puppeteer');
+const puppeteer= require('puppeteer');
 const request = require('request-promise-native');
 const poll = require('promise-poller').default;
-// const selectHour 
+
 const config = {
     sitekey: '6LfSswwUAAAAAHJf09SGVMposJGyUXWXqo_iZ-m4',
     pageurl: 'https://passportappointment.travel.state.gov/',
